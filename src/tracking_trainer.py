@@ -204,6 +204,7 @@ def main():
         config_dir = Path(f"./configs/tracking/tracking_gnn_{args.model}.yaml")
     else:
         config_dir = Path(f"./configs/tracking/tracking_trans_{args.model}.yaml")
+    print(config_dir)
     config = yaml.safe_load(config_dir.open("r").read())
     run_one_seed(config)
 

@@ -53,7 +53,7 @@ def get_new_idx_split(dataset):
 
 class Tracking(InMemoryDataset):
     def __init__(self, root, dataset_name, debug=False, **kwargs):
-        assert dataset_name in ["tracking-6k", "tracking-60k"]
+        assert dataset_name in ["tracking-6k", "tracking-60k", "tracking-acts"]
         self.url_processed_60k = "https://zenodo.org/records/10694703/files/tracking-60k-processed.zip"
         self.url_processed_6k = "https://zenodo.org/records/10694703/files/tracking-6k-processed.zip"
 
@@ -97,7 +97,7 @@ class Tracking(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return ["data21149_s0.pt"]
+        return [os.listdir(self.raw_dir)[0]]
 
     @property
     def processed_file_names(self):
@@ -116,7 +116,7 @@ class Tracking(InMemoryDataset):
         else:
             print("Stop downloading.")
             shutil.rmtree(self.root)
-            exit(-1)
+            # exit(-1)
 
     def process(self):
         all_point_clouds = os.listdir(self.raw_dir)
@@ -124,7 +124,7 @@ class Tracking(InMemoryDataset):
         if self.debug:
             all_point_clouds = all_point_clouds[:150]
 
-        data_list = Parallel(n_jobs=32)(
+        data_list = Parallel(n_jobs=4)(
             delayed(self.process_point_cloud)(point_cloud) for point_cloud in tqdm(all_point_clouds)
         )
 
@@ -138,7 +138,7 @@ class Tracking(InMemoryDataset):
 
     def process_point_cloud(self, point_cloud):
         evtid, sector = get_event_id_sector_from_str(point_cloud)
-        data = torch.load(self.raw_dir / point_cloud)
+        data = torch.load(Path(self.raw_dir) / point_cloud)
         df = get_dataframe(data, evtid, self.feature_names)
 
         eta = calc_eta(df.r, df.z)
@@ -152,6 +152,7 @@ class Tracking(InMemoryDataset):
         # add index to the name to take care of cat_dim easily
         data.point_pairs_index_rad = gen_point_pairs(data, k=256)
         data.knn_edge_index_k60 = to_undirected(knn_graph(data.pos, k=60, loop=True))
+        print("ran!")
         return data
 
     def get_idx_split(self, data_list):
@@ -242,7 +243,7 @@ def calc_eta(r: np.ndarray, z: np.ndarray) -> np.ndarray:
 if __name__ == "__main__":
     root = Path("../../data/tracking")
     parser = argparse.ArgumentParser(description="Build point clouds from raw data.")
-    parser.add_argument("-d", "--dataset_name", type=str, default="tracking-6k")
+    parser.add_argument("-d", "--dataset_name", type=str, default="tracking-acts")
     args = parser.parse_args()
 
     dataset = Tracking(root, args.dataset_name, debug=False)
