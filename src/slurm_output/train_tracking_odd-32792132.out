@@ -1,0 +1,5 @@
+Running on hammer-f008.rcac.purdue.edu
+Working dir: /home/kluitel/HEPT/src
+Mon Mar 30 21:41:01 EDT 2026
+[2026-03-31T01:41:19.006] error: *** JOB 32792132 ON hammer-f008 CANCELLED AT 2026-03-31T01:41:19 DUE TO TIME LIMIT ***
+[2026-03-31T01:41:19.013] error: Detected 1 oom_kill event in StepId=32792132.batch. Some of the step tasks have been OOM Killed.

@@ -6,6 +6,9 @@ __pycache__/
 gnn_tracking/
 new_test/
 
+formatted_events/
+.DS_Store
+
 # C extensions
 *.so
 *.pdf
