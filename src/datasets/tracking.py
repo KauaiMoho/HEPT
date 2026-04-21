@@ -22,6 +22,7 @@ from joblib import Parallel, delayed
 from utils import compute_edge_weight
 from utils import download_url, extract_zip, decide_download
 
+from memory_profiler import profile
 
 class TrackingTransform(BaseTransform):
     def __call__(self, data):
@@ -89,7 +90,7 @@ class Tracking(InMemoryDataset):
 
     @property
     def raw_dir(self):
-        return os.path.join(self.root, "raw", self.dataset_name)
+        return Path(self.root) / "raw" / self.dataset_name
 
     @property
     def processed_dir(self):
@@ -105,7 +106,7 @@ class Tracking(InMemoryDataset):
         return [f"data-{size}.pt"]
 
     def download(self):
-        self.url_processed = self.url_processed_60k if self.dataset_name == "tracking-60k" else self.url_processed_6k
+        self.url_processed = self.url_processed_60k if self.dataset_name == "tracking-60k" else self.url_processed_6k if self.dataset_name == "tracking-6k" else "tracking-acts"
         warning = "This dataset would need ~65 GB of space after extraction. Do you want to continue? (y/n)\n"
         if osp.exists(self.processed_paths[0]):
             return
@@ -119,8 +120,10 @@ class Tracking(InMemoryDataset):
             # exit(-1)
 
     def process(self):
+        temp_dir = Path(self.processed_dir) / "temp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        
         all_point_clouds = os.listdir(self.raw_dir)
-
         if self.debug:
             all_point_clouds = all_point_clouds[:150]
 
@@ -128,13 +131,22 @@ class Tracking(InMemoryDataset):
             delayed(self.process_point_cloud)(point_cloud) for point_cloud in tqdm(all_point_clouds)
         )
 
+        print("Collating files into one...")
+        data_list = []
+        temp_files = sorted(list(temp_dir.glob("*.pt")))
+        
+        for f in tqdm(temp_files):
+            data_list.append(torch.load(f))
+            
         data, slices = self.collate(data_list)
-
-        if len(os.listdir(self.raw_dir)) > 10000:
-            idx_split = self.get_idx_split(data_list)
-        else:
-            idx_split = self.get_idx_split_old(len(data_list))
+        
+        idx_split = self.get_idx_split_old(len(data_list))
         torch.save((data, slices, idx_split), self.processed_paths[0])
+        shutil.rmtree(temp_dir)
+
+    def process_and_save(self, point_cloud, temp_dir):
+        data = self.process_point_cloud(point_cloud)
+        torch.save(data, temp_dir / f"{point_cloud}.pt")
 
     def process_point_cloud(self, point_cloud):
         evtid, sector = get_event_id_sector_from_str(point_cloud)
@@ -192,21 +204,32 @@ def create_point_pairs_from_clusters(cluster_ids, nearby_point_pairs):
         # Get indices (node ids) belonging to the same cluster
         cluster_nearby_points = nearby_point_pairs[1][torch.isin(nearby_point_pairs[0], same_cluster_indices)].unique()
 
-        neg_pairs = torch.tensor(list(product(same_cluster_indices, cluster_nearby_points))).T
-        point_pairs.append(neg_pairs)
+        mask = torch.isin(nearby_point_pairs[0], same_cluster_indices)
+        cluster_nearby_points = nearby_point_pairs[1][mask].unique()
+        
+        if cluster_nearby_points.numel() > 0:
+            grid_a, grid_b = torch.meshgrid(same_cluster_indices, cluster_nearby_points, indexing='ij')
+            neg_pairs = torch.stack([grid_a.reshape(-1), grid_b.reshape(-1)], dim=0)
+            point_pairs.append(neg_pairs)
 
-        pos_pairs = torch.tensor(list(combinations(same_cluster_indices, 2))).T
+        pos_pairs = torch.combinations(same_cluster_indices, r=2).t()
         point_pairs.append(pos_pairs)
 
     point_pairs = torch.cat(point_pairs, dim=-1)
     return point_pairs
 
-
+@profile
 def gen_point_pairs(data, k):
     # nearby_point_pairs = to_undirected(knn_graph(data.pos, k=k, loop=False))
-    nearby_point_pairs = to_undirected(radius_graph(data.pos, r=1.0, loop=False, max_num_neighbors=k))
-    point_pairs = create_point_pairs_from_clusters(data.particle_id, nearby_point_pairs)
-    point_pairs = remove_self_loops(to_undirected(point_pairs))[0]
+
+    edge_index = radius_graph(data.pos, r=1.0, loop=False, max_num_neighbors=k)
+    point_pairs = create_point_pairs_from_clusters(data.particle_id, edge_index)
+    point_pairs = to_undirected(point_pairs)
+    point_pairs, _ = remove_self_loops(point_pairs)
+
+    # nearby_point_pairs = to_undirected(radius_graph(data.pos, r=1.0, loop=False, max_num_neighbors=k))
+    # point_pairs = create_point_pairs_from_clusters(data.particle_id, nearby_point_pairs)
+    # point_pairs = remove_self_loops(to_undirected(point_pairs))[0]
     return point_pairs
 
 
