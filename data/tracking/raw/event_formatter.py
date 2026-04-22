@@ -1,10 +1,12 @@
 import os
 import glob
 import pandas as pd
+import sys
 
-path_head = ""
-input_dir = "raw_events"
-output_dir = "formatted_events"
+tp = sys.argv[1]
+path_head = "/depot/cms/kluitel/HEPT/data/tracking/raw/"
+input_dir = "raw_" + tp
+output_dir = "formatted_" + tp
 
 os.makedirs(path_head + output_dir, exist_ok=True)
 

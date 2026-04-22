@@ -120,7 +120,7 @@ class PointCloudBuilder:
         self.feature_scale = list(feature_scale)
         assert len(self.feature_names) == len(self.feature_scale)
 
-        suffix = "-hits.csv.gz"
+        suffix = "-hits.csv"
         self.prefixes: list[Path] = []
         #: Does an output file for a given key exist?
         self.exists: dict[str, bool] = {}
@@ -161,7 +161,7 @@ class PointCloudBuilder:
                 set(hit_layer_groups.groups.keys()) & set(allowed_layers)
             )
         else:
-            available_allowed_layers = sorted(hit_layer_groups.groups.keys())
+            available_allowed_layers = sorted(hit_layer_groups.groups.keys()) 
         hits = pd.concat(
             [
                 hit_layer_groups.get_group(layer).assign(layer=i)
@@ -368,6 +368,10 @@ class PointCloudBuilder:
                     continue
                 raise
 
+            if hits is None or len(hits) == 0 or cells is None or len(cells) == 0:
+                self.logger.warning("Skipping empty event %d", evtid)
+                continue            
+
             hits, cells = self.restrict_to_subdetectors(hits, cells)
             hits = self.append_features(hits, particles, truth, cells)
             hits_by_pid = hits.groupby("particle_id")
@@ -419,7 +423,7 @@ class PointCloudBuilder:
                 "n_sector_particles": n_sector_particles,
             }
 
-        self.logger.debug("Output statistics: %s", self.stats[evtid])
+        #self.logger.debug("Output statistics: %s", self.stats[evtid])
         if self.measurement_mode:
             measurements = pd.DataFrame(self.measurements)
             means = measurements.mean()

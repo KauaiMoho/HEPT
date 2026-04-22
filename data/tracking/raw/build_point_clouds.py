@@ -6,24 +6,27 @@
 # %%
 from preprocessing.point_cloud_builder import PointCloudBuilder
 from pathlib import Path
+import sys
 
 # %%
 n_sectors = 1
 
+tp = sys.argv[1]
+
 # %%
 data_path = Path("./")
 # Unprocessed data should live here
-input_dir = data_path / "raw_events"
+input_dir = data_path / f"formatted_{tp}"
 assert data_path.is_dir()
-detector_config_path = data_path / "preprocessing" / "detector_kaggle.csv"
+detector_config_path = data_path / f"raw_signal" / "detectors.csv" #TODO: TEMPORARY, CURRENTLY HARDCODED TO SIGNAL DETECTOR
 
 # %%
 # build point clouds for each sector in the pixel layers only
 pc_builder = PointCloudBuilder(
     indir=input_dir,
-    outdir=data_path / "tracking-60k",
+    outdir=data_path / f"tracking-{tp}",
     n_sectors=n_sectors,
-    pixel_only=True,
+    pixel_only=False, # TODO: CHANGED TO FALSE
     redo=True,
     measurement_mode=False,
     sector_di=0,
