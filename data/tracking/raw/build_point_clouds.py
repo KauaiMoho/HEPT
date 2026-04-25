@@ -18,8 +18,7 @@ data_path = Path("./")
 # Unprocessed data should live here
 input_dir = data_path / f"formatted_{tp}"
 assert data_path.is_dir()
-detector_config_path = data_path / f"raw_signal" / "detectors.csv" #TODO: TEMPORARY, CURRENTLY HARDCODED TO SIGNAL DETECTOR
-
+detector_config_path = data_path / f"raw_{tp}" / "detectors.csv"
 # %%
 # build point clouds for each sector in the pixel layers only
 pc_builder = PointCloudBuilder(
