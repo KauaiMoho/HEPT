@@ -15,6 +15,7 @@ tp = sys.argv[1]
 
 # %%
 data_path = Path("./")
+out_base_path = Path("/depot/cms/kluitel/Tau3MuHEPT/data/raw/data_")
 # Unprocessed data should live here
 input_dir = data_path / f"formatted_{tp}"
 assert data_path.is_dir()
@@ -23,7 +24,7 @@ detector_config_path = data_path / f"raw_{tp}" / "detectors.csv"
 # build point clouds for each sector in the pixel layers only
 pc_builder = PointCloudBuilder(
     indir=input_dir,
-    outdir=data_path / f"tracking-{tp}",
+    outdir=out_base_path / f"{tp}",
     n_sectors=n_sectors,
     pixel_only=False, # TODO: CHANGED TO FALSE
     redo=True,
