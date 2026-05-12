@@ -148,9 +148,9 @@ class PointCloudBuilder:
 
     def restrict_to_subdetectors(self, hits: DF, cells: DF) -> tuple[DF, DF]:
         """Rename (volume, layer) pairs with an integer label."""
-        pixel_barrel = [(8, 2), (8, 4), (8, 6), (8, 8)]
-        pixel_LEC = [(7, 14), (7, 12), (7, 10), (7, 8), (7, 6), (7, 4), (7, 2)]
-        pixel_REC = [(9, 2), (9, 4), (9, 6), (9, 8), (9, 10), (9, 12), (9, 14)]
+        pixel_barrel = [(16, 2), (16, 4), (16, 6), (16, 8)]
+        pixel_LEC = [(17, 14), (17, 12), (17, 10), (17, 8), (17, 6), (17, 4), (17, 2)]
+        pixel_REC = [(18, 2), (18, 4), (18, 6), (18, 8), (18, 10), (18, 12), (18, 14)]
         allowed_layers = None
         if self.pixel_only:
             allowed_layers = pixel_barrel + pixel_REC + pixel_LEC
