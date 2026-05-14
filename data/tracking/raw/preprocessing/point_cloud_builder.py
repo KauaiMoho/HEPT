@@ -369,7 +369,6 @@ class PointCloudBuilder:
                 raise
 
             if hits is None or len(hits) == 0 or cells is None or len(cells) == 0:
-                self.logger.warning("Skipping empty event %d", evtid)
                 continue            
 
             hits, cells = self.restrict_to_subdetectors(hits, cells)
