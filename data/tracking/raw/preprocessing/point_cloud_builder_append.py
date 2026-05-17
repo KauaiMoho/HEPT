@@ -7,6 +7,7 @@ import traceback
 from pathlib import Path, PurePath
 from typing import Any
 from tqdm import tqdm
+import uuid
 
 import numpy as np
 import pandas as pd
@@ -356,6 +357,7 @@ class PointCloudBuilder:
         Returns:
 
         """
+        pid = uuid.uuid4() 
         for f in self.prefixes[start:stop]:
             self.logger.debug("Processing %s", f)
 
@@ -402,7 +404,7 @@ class PointCloudBuilder:
             n_sector_hits = 0  # total quantities appearing in sectored graph
             n_sector_particles = 0
             for s in range(self.n_sectors):
-                name = f"data{evtid}_s{s}.pt"
+                name = f"data{evtid}_s{s}_{pid}.pt"
                 if self.exists[name] and not self.redo:
                     if self._collect_data:
                         data = torch.load(self.outdir / name)
