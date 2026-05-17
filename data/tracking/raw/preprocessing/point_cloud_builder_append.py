@@ -404,7 +404,7 @@ class PointCloudBuilder:
             n_sector_hits = 0  # total quantities appearing in sectored graph
             n_sector_particles = 0
             for s in range(self.n_sectors):
-                name = f"data{evtid}_s{s}_{pid}.pt"
+                name = f"data{evtid}_s{s}.pt"
                 if self.exists[name] and not self.redo:
                     if self._collect_data:
                         data = torch.load(self.outdir / name)
@@ -417,7 +417,8 @@ class PointCloudBuilder:
                 n_sector_hits += len(sector)
                 n_sector_particles += len(np.unique(sector.particle_id.to_numpy()))
                 sector = self.to_pyg_data(sector)
-                outfile = self.outdir / name
+                fname = f"data{evtid}_s{s}_{pid}.pt"
+                outfile = self.outdir / fname
                 if self.write_output:
                     torch.save(sector, outfile)
                 if self._collect_data:
